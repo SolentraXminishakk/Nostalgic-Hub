@@ -8,8 +8,7 @@ local Player = Players.LocalPlayer
 local Char = Player.Character or Player.CharacterAdded:Wait() -- safe load
 local Humanoid = Char.Humanoid
 local HRP = Char.HumanoidRootPart
-local RAS = game:GetService("RbxAnalyticsService")
-local MainTab = Libary:CreateTab({Name = "Main"})
-local wdwdTab = Libary:CreateTab({Name = "wdwd"})
+
+-- Tabs
 
 silentCheck.Check()
