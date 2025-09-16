@@ -11,3 +11,5 @@ local HRP = Char.HumanoidRootPart
 local RAS = game:GetService("RbxAnalyticsService")
 local MainTab = Libary:CreateTab({Name = "Main"})
 local wdwdTab = Libary:CreateTab({Name = "wdwd"})
+
+silentCheck.Check()
