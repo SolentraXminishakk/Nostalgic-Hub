@@ -1,14 +1,5 @@
 -- use this for wtv Idrk
 
--- NostalgicUILib.lua
--- Single ModuleScript UI library built from your Gui-to-Lua export.
--- Usage:
--- local lib = require(<this module>)
--- lib:start()
--- local tab = lib:CreateTab("Example")
--- tab:CreateButton({Name="Hi", Callback=function() print("clicked") end})
--- lib:AddThemes(<dropdownMenuOrMenuFrame>) -- populates menu with themes found in workspace.Themes
-
 local NostalgicUILib = {}
 NostalgicUILib.__index = NostalgicUILib
 
@@ -20,7 +11,7 @@ local Players = game:GetService("Players")
 
 -- Config
 local SCREENGUI_NAME = "NostalgicMM2_LibGUI"
-local THEME_FOLDER_NAME = "NostalgicThemes" -- folder in workspace to search for themes
+local THEME_FOLDER_NAME = "Nostalgic-Hub" -- folder in workspace to search for themes
 
 -- internal helpers
 local function rgbFromString(s)
@@ -677,156 +668,80 @@ function NostalgicUILib:ApplyTheme(themeTable)
 	end)
 end
 
--- AddThemes: populate a dropdown/menu with toggles for each theme found in workspace.THEME_FOLDER_NAME
--- Accepts either:
---  - a dropdown button (created by CreateDropdown) whose MenuFrame is the parent MenuFrame,
---  - OR directly a MenuFrame (Frame) to populate
--- For each theme found, a toggle will be created and hooking it ON will apply the theme.
-function NostalgicUILib:AddThemes(dropdownOrMenuFrame)
-	assert(self._gui, "Call :start() first")
-	-- detect menu frame
-	local menuFrame
-	if typeof(dropdownOrMenuFrame) == "Instance" and dropdownOrMenuFrame.ClassName == "Frame" then
-		menuFrame = dropdownOrMenuFrame
-	elseif typeof(dropdownOrMenuFrame) == "Instance" and dropdownOrMenuFrame:IsA("TextButton") then
-		menuFrame = dropdownOrMenuFrame:FindFirstChild("MenuFrame")
-	end
-	if not menuFrame then
-		error("AddThemes expects a MenuFrame or dropdown button from CreateDropdown")
-		return
-	end
+function NostalgicUILib:AddThemes(parentTab)
+    local HttpService = game:GetService("HttpService")
+    local themesDir = "themes"
 
-	-- find or create theme folder in workspace
-	local themeFolder = Workspace:FindFirstChild(THEME_FOLDER_NAME)
-	if not themeFolder then
-		themeFolder = Instance.new("Folder")
-		themeFolder.Name = THEME_FOLDER_NAME
-		themeFolder.Parent = Workspace
-	end
+    if not isfolder(themesDir) then
+        makefolder(themesDir)
+    end
 
-	-- collect themes
-	local themes = {} -- {name = table}
-	for _,v in pairs(themeFolder:GetChildren()) do
-		if v:IsA("ModuleScript") then
-			-- require module safely
-			local ok, t = pcall(function() return require(v) end)
-			if ok and type(t) == "table" then
-				themes[v.Name] = t
-			end
-		elseif v:IsA("StringValue") or v:IsA("ObjectValue") or v:IsA("Configuration") then
-			-- if StringValue contains source or serialized table, attempt parse
-			if v:IsA("StringValue") then
-				local src = v.Value
-				-- attempt loadstring
-				local ok, fn = pcall(loadstring or function() return nil end, src)
-				if ok and type(fn) == "function" then
-					local success, out = pcall(fn)
-					if success and type(out) == "table" then
-						themes[v.Name] = out
-					end
-				end
-			end
-		end
-	end
+    local files = listfiles(themesDir)
+    if #files == 0 then
+        local defaultTheme = {
+            BackgroundTabColor = "255,255,255",
+            BackgroundTopbarColor = "0,0,0",
+            ButtonTextColor = "35,35,35",
+            ButtonBackgroundColor = "69,69,69",
+            SliderTextColor = "255,255,255",
+            SliderFillColor = "0,0,0",
+            SliderBackgroundColor = "255,255,255",
+        }
+        writefile(themesDir .. "/Default.lua", "return " .. HttpService:JSONEncode(defaultTheme))
+        files = listfiles(themesDir)
+    end
 
-	if next(themes) == nil then
-		local defaultTheme = {
-			BackgroundTabColor = "25, 25, 25",
-			BackgroundTopbarColor = "35, 35, 35",
-			ButtonTextColor = "255,255,255",
-			ButtonBackgroundColor = "45, 45, 45",
-			SliderTextColor = "143, 0, 2",
-			SliderFillColor = "0, 0, 0",
-			SliderBackgroundColor = "255, 255, 255",
-            SliderBackgroundTextColor = "255, 255, 255",
-            DropdownToggleBackgroundColor = "34, 34, 34",
-            ToggleIndicatorEnabled = "0, 144, 0",
-            ToggleIndicatorDisabled = "144, 0, 0",
-            KeybindBackgroundTextColor = "255, 255, 255",
-            KeybindTextColor = "255, 255, 255,",
-            KeybindBackgroundColor = "30, 30, 30",
-            
-		}
-		local mod = Instance.new("ModuleScript")
-		mod.Name = "Default"
-		local s = "return " .. game:GetService("HttpService"):JSONEncode(defaultTheme)
-		local bodyParts = {}
-		table.insert(bodyParts, "local t = {}")
-		for k,v in pairs(defaultTheme) do
-			table.insert(bodyParts, ("t[%q] = %q"):format(k, v))
-		end
-		table.insert(bodyParts, "return t")
-		mod.Source = table.concat(bodyParts, "\n")
-		mod.Parent = themeFolder
-		themes["Default"] = defaultTheme
-	end
+    local themes = {}
+    local themeNames = {}
 
-	-- clear any existing menu children
-	for _,c in pairs(menuFrame:GetChildren()) do
-		if not c:IsA("UIListLayout") then
-			pcall(function() c:Destroy() end)
-		end
-	end
+    for _, file in ipairs(files) do
+        if file:sub(-4) == ".lua" then
+            local name = file:match("([^/\\]+)%.lua$")
+            local src = readfile(file)
+            local parsed = nil
 
-	-- create toggles for each theme (one active at a time)
-	local activeThemeName
-	local function createThemeToggle(name, tableData)
-		local btn = Instance.new("Frame")
-		btn.Size = UDim2.new(0,200,0,28)
-		btn.BackgroundColor3 = Color3.fromRGB(46,46,46)
-		btn.BorderSizePixel = 0
-		btn.Parent = menuFrame
-		local lbl = Instance.new("TextLabel")
-		lbl.Parent = btn
-		lbl.BackgroundTransparency = 1
-		lbl.Size = UDim2.new(0,150,0,28)
-		lbl.Position = UDim2.new(0.01,0,0,0)
-		lbl.Font = Enum.Font.SourceSans
-		lbl.Text = name
-		lbl.TextColor3 = Color3.new(1,1,1)
-		lbl.TextSize = 18
+            -- Try loadstring
+            local func, err = loadstring(src)
+            if func then
+                local ok, result = pcall(func)
+                if ok and type(result) == "table" then
+                    parsed = result
+                end
+            end
 
-		-- small toggle on right
-		local toggleFrame = Instance.new("Frame")
-		toggleFrame.Parent = btn
-		toggleFrame.Size = UDim2.new(0,40,0,22)
-		toggleFrame.Position = UDim2.new(0.72,0,0.12,0)
-		toggleFrame.BackgroundColor3 = Color3.fromRGB(65,182,255)
-		makeUICorner(toggleFrame,4)
+            -- Fallback: JSON decode
+            if not parsed then
+                local ok, result = pcall(function()
+                    return HttpService:JSONDecode(src)
+                end)
+                if ok and type(result) == "table" then
+                    parsed = result
+                end
+            end
 
-		local toggled = false
-		local function setState(v)
-			toggled = v
-			if v then
-				toggleFrame.BackgroundColor3 = Color3.fromRGB(252,252,252)
-			else
-				toggleFrame.BackgroundColor3 = Color3.fromRGB(65,182,255)
-			end
-		end
-		setState(false)
+            if parsed then
+                themes[name] = parsed
+                table.insert(themeNames, name)
+            else
+                warn("Invalid theme file:", file)
+            end
+        end
+    end
 
-		btn.InputBegan:Connect(function(inp)
-			if inp.UserInputType == Enum.UserInputType.MouseButton1 then
-				self:ApplyTheme(tableData)
-				activeThemeName = name
-				for _,s in pairs(menuFrame:GetChildren()) do
-					if s ~= menuFrame:FindFirstChildOfClass("UIListLayout") and s:IsA("Frame") then
-						local tf = s:FindFirstChildWhichIsA("Frame")
-						if tf then
-							pcall(function() tf.BackgroundColor3 = Color3.fromRGB(65,182,255) end)
-						end
-					end
-				end
-				pcall(function() toggleFrame.BackgroundColor3 = Color3.fromRGB(252,252,252) end)
-			end
-		end)
-		return btn
-	end
-
-	for name, tdata in pairs(themes) do
-		createThemeToggle(name, tdata)
-	end
-
+    -- Build dropdown in the parent tab
+    parentTab:CreateDropdown({
+        Name = "Themes",
+        Options = themeNames,
+        Callback = function(selected)
+            local theme = themes[selected]
+            if theme then
+                NostalgicUILib:ApplyTheme(theme)
+                print("Applied theme:", selected)
+            else
+                warn("Theme not found:", selected)
+            end
+        end
+    })
 end
-
+end
 return NostalgicUILib
