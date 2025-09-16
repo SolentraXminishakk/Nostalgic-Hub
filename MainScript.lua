@@ -11,4 +11,4 @@ local HRP = Char.HumanoidRootPart
 
 -- Tabs
 
-silentCheck.Check()
+Check()
