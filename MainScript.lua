@@ -10,5 +10,8 @@ local Humanoid = Char.Humanoid
 local HRP = Char.HumanoidRootPart
 
 -- Tabs
+local VisualTab = Library:CreateTab({
+  Name = "Visuals"    
+})
 
 Check()
