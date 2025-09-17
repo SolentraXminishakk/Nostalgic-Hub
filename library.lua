@@ -672,10 +672,12 @@ function NostalgicUILib:AddThemes(parentTab)
     local HttpService = game:GetService("HttpService")
     local themesDir = "themes"
 
+    -- Make sure the themes folder exists
     if not isfolder(themesDir) then
         makefolder(themesDir)
     end
 
+    -- Create default theme if no files exist
     local files = listfiles(themesDir)
     if #files == 0 then
         local defaultTheme = {
@@ -691,6 +693,7 @@ function NostalgicUILib:AddThemes(parentTab)
         files = listfiles(themesDir)
     end
 
+    -- Load themes
     local themes = {}
     local themeNames = {}
 
