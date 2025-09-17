@@ -1,25 +1,14 @@
--- heres the script src (complicated so I wouldnt touch around this)
-local Libary = loadstring(game:HttpGet("https://raw.githubusercontent.com/SolentraXminishakk/Nostalgic-Hub/refs/heads/main/library.lua"))()
-local silentCheck = loadstring(game:HttpGet("https://raw.githubusercontent.com/SolentraXminishakk/Nostalgic-Hub/refs/heads/main/silentCheck.lua"))()
+-- load the library (example as remote)
+local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/.../library.lua"))()
 
--- Tabs
-local VisualTab = Library:CreateTab({
-  Name = "Visuals"    
-})
+-- MUST start (or CreateTab will auto-start)
+Library:start()
 
-local PlayerTab = Library:CreateTab({
-  Name = "Player"    
-})
+-- create tabs (two valid styles)
+local VisualTab = Library:CreateTab("Visuals")
+local PlayerTab  = Library:CreateTab({ Name = "Player" })
 
-local GameModsTab = Library:CreateTab({
-  Name = "Game Mods"    
-})
+-- populate the themes dropdown on VisualTab (uses exploit fs if available)
+Library:AddThemes(VisualTab)
 
-local TeleportTab = Library:CreateTab({
-  Name = "Teleport"    
-})
-
-local FreemotesTab = Library:CreateTab({
-  Name = "Free Emotes"    
-})
 Check()
