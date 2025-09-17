@@ -1,5 +1,5 @@
 -- load the library (example as remote)
-local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/.../library.lua"))()
+local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/SolentraXminishakk/Nostalgic-Hub/refs/heads/main/library.lua"))()
 
 -- MUST start (or CreateTab will auto-start)
 Library:start()
