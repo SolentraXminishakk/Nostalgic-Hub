@@ -1,6 +1,6 @@
--- load the library (example as remote)
-local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/SolentraXminishakk/Nostalgic-Hub/refs/heads/main/library.lua"))()
-local silentCheck = loadstring(game:HttpGet("https://raw.githubusercontent.com/SolentraXminishakk/Nostalgic-Hub/refs/heads/main/silentCheck.lua"))()
+-- Corrected raw URLs
+local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/SolentraXminishakk/Nostalgic-Hub/main/library.lua"))()
+local silentCheck = loadstring(game:HttpGet("https://raw.githubusercontent.com/SolentraXminishakk/Nostalgic-Hub/main/silentCheck.lua"))()
 
 -- MUST start (or CreateTab will auto-start)
 Library:start()
@@ -12,4 +12,4 @@ local PlayerTab  = Library:CreateTab({ Name = "Player" })
 -- populate the themes dropdown on VisualTab (uses exploit fs if available)
 Library:AddThemes(VisualTab)
 
-Check()
+Check() -- if your silentCheck file returns a table with Check()
